@@ -140,6 +140,16 @@
             box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
         }
         
+        .save-btn {
+            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        
+        .history-btn {
+            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
         .btn-icon {
             font-size: 24px;
         }
@@ -173,6 +183,18 @@
         .audio-container {
             margin-top: 30px;
             display: none;
+            width: 100%;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .audio-controls .btn {
+            flex: 1;
+            padding: 12px;
         }
         
         audio {
@@ -198,6 +220,70 @@
         .upload-status.error {
             background: rgba(239, 68, 68, 0.2);
             border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+        
+        .history-container {
+            margin-top: 30px;
+            width: 100%;
+            display: none;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+        
+        .history-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .history-info {
+            flex: 1;
+        }
+        
+        .history-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .history-date {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .history-btn-small {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 6px;
+            padding: 6px 10px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
         }
         
         .footer {
@@ -253,6 +339,31 @@
         <div class="audio-container" id="audioContainer">
             <p>Your recording:</p>
             <audio id="audioPlayback" controls></audio>
+            <div class="audio-controls">
+                <button class="btn save-btn" id="saveBtn" onclick="saveToDevice()">
+                    <span class="btn-icon">💾</span>
+                    <span class="btn-text">Save to Device</span>
+                </button>
+                <button class="btn" onclick="saveToLibrary()" style="background:linear-gradient(45deg,#8b5cf6,#7c3aed);">
+                    <span class="btn-icon">📁</span>
+                    <span class="btn-text">Save to Library</span>
+                </button>
+            </div>
+        </div>
+        
+        <button class="btn history-btn" id="historyBtn" onclick="toggleHistory()" style="width:100%;margin-top:20px;display:none;">
+            <span class="btn-icon">📚</span>
+            <span class="btn-text">View Saved Recordings (<span id="historyCount">0</span>)</span>
+        </button>
+        
+        <div class="history-container" id="historyContainer">
+            <div class="history-header">
+                <h3>Saved Recordings</h3>
+                <button class="history-btn-small" onclick="clearHistory()">Clear All</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- History items will appear here -->
+            </div>
         </div>
         
         <div class="upload-status" id="uploadStatus">
@@ -261,7 +372,7 @@
     </div>
     
     <div class="footer">
-        <p>Pause during inspection time to exclude from analysis</p>
+        <p>Recordings are saved locally on your device</p>
     </div>
 
     <script>
@@ -273,6 +384,7 @@
         let startTime;
         let timerInterval;
         let elapsedTime = 0;
+        let currentRecording = null;
         
         // DOM Elements
         const recordBtn = document.getElementById('recordBtn');
@@ -286,6 +398,15 @@
         const uploadStatus = document.getElementById('uploadStatus');
         const uploadMessage = document.getElementById('uploadMessage');
         const pauseText = document.getElementById('pauseText');
+        const saveBtn = document.getElementById('saveBtn');
+        const historyBtn = document.getElementById('historyBtn');
+        const historyContainer = document.getElementById('historyContainer');
+        const historyList = document.getElementById('historyList');
+        const historyCount = document.getElementById('historyCount');
+        
+        // Initialize from localStorage
+        let recordings = JSON.parse(localStorage.getItem('talkTrackRecordings') || '[]');
+        updateHistoryUI();
         
         // Format time as MM:SS
         function formatTime(seconds) {
@@ -332,14 +453,24 @@
                         type: 'audio/webm' 
                     });
                     
+                    // Store current recording
+                    currentRecording = {
+                        id: Date.now().toString(),
+                        blob: audioBlob,
+                        duration: elapsedTime,
+                        timestamp: new Date().toISOString(),
+                        name: `Sales Meeting ${new Date().toLocaleDateString()}`
+                    };
+                    
                     // Create playback URL
                     const audioUrl = URL.createObjectURL(audioBlob);
                     audioPlayback.src = audioUrl;
                     
-                    // Show audio player
+                    // Show audio player and controls
                     audioContainer.style.display = 'block';
+                    historyBtn.style.display = 'block';
                     
-                    // Upload to backend
+                    // Upload to backend (simulated)
                     await uploadRecording(audioBlob);
                     
                     // Reset
@@ -408,20 +539,19 @@
             }
         }
         
-        // Upload recording to backend
+        // Upload recording to backend (simulated)
         async function uploadRecording(audioBlob) {
             try {
                 // Show upload status
                 uploadStatus.style.display = 'block';
-                uploadMessage.textContent = 'Uploading your recording...';
+                uploadMessage.textContent = 'Processing recording...';
                 
-                // Simulate upload (replace with actual API call)
-                // For now, we'll simulate a successful upload
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Simulate processing delay
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
                 // Success
                 uploadStatus.classList.add('success');
-                uploadMessage.innerHTML = '✅ Upload successful!<br><small>Your recording is being analyzed</small>';
+                uploadMessage.innerHTML = '✅ Recording saved locally!<br><small>Ready for AI analysis when connected</small>';
                 status.textContent = 'Ready for next recording';
                 timer.textContent = '00:00';
                 elapsedTime = 0;
@@ -435,23 +565,219 @@
             } catch (error) {
                 // Error handling
                 uploadStatus.classList.add('error');
-                uploadMessage.textContent = `❌ Upload failed: ${error.message}`;
-                status.textContent = 'Upload failed - recording saved locally';
-                
-                // Save to device storage as fallback
-                saveToDevice(audioBlob);
+                uploadMessage.textContent = `❌ Error: ${error.message}`;
+                status.textContent = 'Recording saved locally only';
             }
         }
         
-        // Save recording to device (fallback)
-        function saveToDevice(audioBlob) {
-            const url = URL.createObjectURL(audioBlob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `talk-track-${Date.now()}.webm`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+        // Save to device (download as file)
+        function saveToDevice() {
+            if (!currentRecording) return;
+            
+            try {
+                const url = URL.createObjectURL(currentRecording.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                // Create filename with date
+                const date = new Date().toISOString().split('T')[0];
+                const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+                a.download = `talk-track-${date}-${time}.webm`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                // Show confirmation
+                uploadStatus.style.display = 'block';
+                uploadStatus.classList.add('success');
+                uploadMessage.textContent = '✅ Recording saved to Downloads!';
+                
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                    uploadStatus.classList.remove('success');
+                }, 3000);
+                
+            } catch (error) {
+                alert('Failed to save recording: ' + error.message);
+            }
+        }
+        
+        // Save to library (local storage)
+        function saveToLibrary() {
+            if (!currentRecording) return;
+            
+            try {
+                // Convert blob to base64 for storage
+                const reader = new FileReader();
+                reader.readAsDataURL(currentRecording.blob);
+                reader.onloadend = function() {
+                    const recordingData = {
+                        id: currentRecording.id,
+                        name: prompt('Name this recording:', currentRecording.name) || currentRecording.name,
+                        duration: currentRecording.duration,
+                        timestamp: currentRecording.timestamp,
+                        data: reader.result, // base64 encoded audio
+                        format: 'audio/webm'
+                    };
+                    
+                    // Add to recordings array
+                    recordings.unshift(recordingData); // Add to beginning
+                    
+                    // Save to localStorage (max 50 recordings)
+                    if (recordings.length > 50) {
+                        recordings = recordings.slice(0, 50);
+                    }
+                    
+                    localStorage.setItem('talkTrackRecordings', JSON.stringify(recordings));
+                    
+                    // Update UI
+                    updateHistoryUI();
+                    
+                    // Show confirmation
+                    uploadStatus.style.display = 'block';
+                    uploadStatus.classList.add('success');
+                    uploadMessage.textContent = '✅ Added to library!';
+                    
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none';
+                        uploadStatus.classList.remove('success');
+                    }, 3000);
+                };
+                
+            } catch (error) {
+                alert('Failed to save to library: ' + error.message);
+            }
+        }
+        
+        // Update history UI
+        function updateHistoryUI() {
+            historyCount.textContent = recordings.length;
+            
+            if (recordings.length === 0) {
+                historyList.innerHTML = '<div class="history-item">No saved recordings yet</div>';
+                return;
+            }
+            
+            historyList.innerHTML = recordings.map(recording => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-name">${recording.name}</div>
+                        <div class="history-date">
+                            ${new Date(recording.timestamp).toLocaleDateString()} • 
+                            ${formatTime(recording.duration)}
+                        </div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="history-btn-small" onclick="playFromLibrary('${recording.id}')">▶️ Play</button>
+                        <button class="history-btn-small" onclick="downloadFromLibrary('${recording.id}')">💾 Save</button>
+                        <button class="history-btn-small" onclick="deleteFromLibrary('${recording.id}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Play recording from library
+        function playFromLibrary(id) {
+            const recording = recordings.find(r => r.id === id);
+            if (recording) {
+                // Convert base64 back to blob
+                const byteString = atob(recording.data.split(',')[1]);
+                const mimeString = recording.data.split(',')[0].split(':')[1].split(';')[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeString });
+                
+                // Play the audio
+                const url = URL.createObjectURL(blob);
+                audioPlayback.src = url;
+                audioContainer.style.display = 'block';
+                
+                // Auto-play (with user gesture)
+                audioPlayback.play().catch(e => console.log('Auto-play prevented:', e));
+                
+                // Show current recording name
+                status.textContent = `Playing: ${recording.name}`;
+            }
+        }
+        
+        // Download recording from library
+        function downloadFromLibrary(id) {
+            const recording = recordings.find(r => r.id === id);
+            if (recording) {
+                // Convert base64 to blob
+                const byteString = atob(recording.data.split(',')[1]);
+                const mimeString = recording.data.split(',')[0].split(':')[1].split(';')[0];
+                const ab = new ArrayBuffer(byteString.length);
+                const ia = new Uint8Array(ab);
+                for (let i = 0; i < byteString.length; i++) {
+                    ia[i] = byteString.charCodeAt(i);
+                }
+                const blob = new Blob([ab], { type: mimeString });
+                
+                // Download
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${recording.name.replace(/[^a-z0-9]/gi, '_')}.webm`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+        
+        // Delete recording from library
+        function deleteFromLibrary(id) {
+            if (confirm('Delete this recording?')) {
+                recordings = recordings.filter(r => r.id !== id);
+                localStorage.setItem('talkTrackRecordings', JSON.stringify(recordings));
+                updateHistoryUI();
+                
+                // Show confirmation
+                uploadStatus.style.display = 'block';
+                uploadStatus.classList.add('success');
+                uploadMessage.textContent = '✅ Recording deleted';
+                
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                    uploadStatus.classList.remove('success');
+                }, 2000);
+            }
+        }
+        
+        // Toggle history view
+        function toggleHistory() {
+            if (historyContainer.style.display === 'block') {
+                historyContainer.style.display = 'none';
+            } else {
+                historyContainer.style.display = 'block';
+                updateHistoryUI();
+            }
+        }
+        
+        // Clear all history
+        function clearHistory() {
+            if (confirm('Delete ALL saved recordings?')) {
+                recordings = [];
+                localStorage.removeItem('talkTrackRecordings');
+                updateHistoryUI();
+                historyContainer.style.display = 'none';
+                
+                // Show confirmation
+                uploadStatus.style.display = 'block';
+                uploadStatus.classList.add('success');
+                uploadMessage.textContent = '✅ All recordings deleted';
+                
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                    uploadStatus.classList.remove('success');
+                }, 3000);
+            }
         }
         
         // Service Worker Registration for PWA
@@ -479,6 +805,11 @@
         if (window.navigator.standalone) {
             document.documentElement.style.height = '100%';
             document.body.style.height = '100%';
+        }
+        
+        // Show history button if we have saved recordings
+        if (recordings.length > 0) {
+            historyBtn.style.display = 'block';
         }
     </script>
 </body>
