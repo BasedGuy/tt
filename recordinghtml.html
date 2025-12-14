@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Talk Track Recorder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background: #f3f4f6;
+            min-height: 100vh;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            margin: 10px;
+            cursor: pointer;
+            width: 200px;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        button.stop {
+            background: #dc2626;
+        }
+        .status {
+            margin: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            min-height: 24px;
+        }
+        audio {
+            width: 100%;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎤 Talk Track Recorder</h1>
+    
+    <div id="status" class="status">Ready to record</div>
+    
+    <button id="recordBtn" onclick="startRecording()">Start Recording</button>
+    <button id="pauseBtn" onclick="togglePause()" disabled>Pause</button>
+    <button id="stopBtn" onclick="stopRecording()" class="stop" disabled>Stop & Upload</button>
+    
+    <audio id="audioPlayback" controls style="display:none;"></audio>
+    
+    <div id="uploadStatus"></div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isPaused = false;
+        
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = document.getElementById('audioPlayback');
+                    audio.src = audioUrl;
+                    audio.style.display = 'block';
+                    
+                    // Upload to your backend
+                    await uploadAudio(audioBlob);
+                    
+                    audioChunks = [];
+                };
+                
+                mediaRecorder.start();
+                updateStatus('Recording...');
+                document.getElementById('recordBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = false;
+            } catch (err) {
+                updateStatus('Error: ' + err.message);
+            }
+        }
+        
+        function togglePause() {
+            if (!mediaRecorder) return;
+            
+            if (isPaused) {
+                mediaRecorder.resume();
+                updateStatus('Recording...');
+                document.getElementById('pauseBtn').textContent = 'Pause';
+            } else {
+                mediaRecorder.pause();
+                updateStatus('Paused (inspection time)');
+                document.getElementById('pauseBtn').textContent = 'Resume';
+            }
+            isPaused = !isPaused;
+        }
+        
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                updateStatus('Processing...');
+                document.getElementById('recordBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = true;
+            }
+        }
+        
+        async function uploadAudio(blob) {
+            const uploadStatus = document.getElementById('uploadStatus');
+            uploadStatus.innerHTML = 'Uploading...';
+            
+            try {
+                // Replace with your actual backend URL
+                const formData = new FormData();
+                formData.append('audio', blob, 'recording.mp3');
+                
+                // Example: Upload to your backend
+                // const response = await fetch('YOUR_BACKEND_URL/api/upload', {
+                //     method: 'POST',
+                //     body: formData
+                // });
+                
+                // Simulate upload
+                setTimeout(() => {
+                    uploadStatus.innerHTML = '✅ Upload complete! Check your backend.';
+                    updateStatus('Ready for next recording');
+                }, 1500);
+                
+            } catch (error) {
+                uploadStatus.innerHTML = '❌ Upload failed: ' + error.message;
+            }
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+    </script>
+</body>
+</html>
