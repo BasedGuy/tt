@@ -29,5 +29,6 @@
       "url": "/?record",
       "icons": [{ "src": "https://img.icons8.com/color/96/000000/microphone.png", "sizes": "96x96" }]
     }
-  ]
+  ],
+  "permissions": ["storage"]
 }
