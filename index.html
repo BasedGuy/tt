@@ -1,20 +1,484 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Talk Track</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Talk Track - Sales Meeting Recorder</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/000000/microphone.png">
+    
+    <!-- CSS Styles -->
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; }
-        h1 { color: #4f46e5; }
-        button { background: #4f46e5; color: white; padding: 15px 30px; border: none; border-radius: 10px; font-size: 18px; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .status-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #status {
+            font-size: 18px;
+            font-weight: 500;
+            color: #fff;
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: 700;
+            margin: 15px 0;
+            font-variant-numeric: tabular-nums;
+            color: #fff;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: white;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .record-btn {
+            background: linear-gradient(45deg, #ef4444, #dc2626);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+        
+        .pause-btn {
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        }
+        
+        .stop-btn {
+            background: linear-gradient(45deg, #10b981, #059669);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-icon {
+            font-size: 24px;
+        }
+        
+        .btn-text {
+            font-size: 14px;
+        }
+        
+        .recording-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        
+        .pulse {
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.7; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.7; }
+        }
+        
+        .audio-container {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        audio {
+            width: 100%;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        .upload-status {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .upload-status.success {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.5);
+        }
+        
+        .upload-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* iPhone notch/pill safe areas */
+        @supports (padding: max(0px)) {
+            body {
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>🎤 Talk Track Recorder</h1>
-    <p>Recording app will load here...</p>
-    <button onclick="test()">Test Button</button>
+    <div class="container">
+        <div class="header">
+            <h1>🎤 Talk Track</h1>
+            <p class="subtitle">Record sales meetings for AI analysis</p>
+        </div>
+        
+        <div class="status-box">
+            <div id="status">Ready to record</div>
+            <div class="timer" id="timer">00:00</div>
+        </div>
+        
+        <div class="recording-indicator" id="recordingIndicator">
+            <div class="pulse"></div>
+            <span>Recording active</span>
+        </div>
+        
+        <div class="controls">
+            <button class="btn record-btn" id="recordBtn" onclick="startRecording()">
+                <span class="btn-icon">●</span>
+                <span class="btn-text">Record</span>
+            </button>
+            
+            <button class="btn pause-btn" id="pauseBtn" onclick="togglePause()" disabled>
+                <span class="btn-icon">⏸️</span>
+                <span class="btn-text" id="pauseText">Pause</span>
+            </button>
+            
+            <button class="btn stop-btn" id="stopBtn" onclick="stopRecording()" disabled>
+                <span class="btn-icon">⏹️</span>
+                <span class="btn-text">Stop</span>
+            </button>
+        </div>
+        
+        <div class="audio-container" id="audioContainer">
+            <p>Your recording:</p>
+            <audio id="audioPlayback" controls></audio>
+        </div>
+        
+        <div class="upload-status" id="uploadStatus">
+            <p id="uploadMessage">Uploading your recording...</p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>Pause during inspection time to exclude from analysis</p>
+    </div>
+
     <script>
-        function test() {
-            alert('App is working!');
+        // State variables
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let isPaused = false;
+        let startTime;
+        let timerInterval;
+        let elapsedTime = 0;
+        
+        // DOM Elements
+        const recordBtn = document.getElementById('recordBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const status = document.getElementById('status');
+        const timer = document.getElementById('timer');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        const audioContainer = document.getElementById('audioContainer');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const uploadStatus = document.getElementById('uploadStatus');
+        const uploadMessage = document.getElementById('uploadMessage');
+        const pauseText = document.getElementById('pauseText');
+        
+        // Format time as MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Update timer display
+        function updateTimer() {
+            elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+            timer.textContent = formatTime(elapsedTime);
+        }
+        
+        // Start recording
+        async function startRecording() {
+            try {
+                // Request microphone access
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        sampleRate: 44100
+                    }
+                });
+                
+                // Create MediaRecorder
+                mediaRecorder = new MediaRecorder(stream, {
+                    mimeType: 'audio/webm;codecs=opus',
+                    audioBitsPerSecond: 128000
+                });
+                
+                // Collect audio data
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+                
+                // Handle recording stop
+                mediaRecorder.onstop = async () => {
+                    // Create audio blob
+                    const audioBlob = new Blob(audioChunks, { 
+                        type: 'audio/webm' 
+                    });
+                    
+                    // Create playback URL
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayback.src = audioUrl;
+                    
+                    // Show audio player
+                    audioContainer.style.display = 'block';
+                    
+                    // Upload to backend
+                    await uploadRecording(audioBlob);
+                    
+                    // Reset
+                    audioChunks = [];
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                // Start recording
+                mediaRecorder.start(1000); // Collect data every second
+                isRecording = true;
+                startTime = Date.now();
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                // Update UI
+                status.textContent = 'Recording...';
+                recordBtn.disabled = true;
+                pauseBtn.disabled = false;
+                stopBtn.disabled = false;
+                recordingIndicator.style.display = 'flex';
+                
+            } catch (error) {
+                console.error('Recording error:', error);
+                status.textContent = `Error: ${error.message}`;
+                alert('Could not access microphone. Please check permissions.');
+            }
+        }
+        
+        // Toggle pause/resume
+        function togglePause() {
+            if (!mediaRecorder) return;
+            
+            if (isPaused) {
+                // Resume recording
+                mediaRecorder.resume();
+                status.textContent = 'Recording...';
+                pauseText.textContent = 'Pause';
+                recordingIndicator.style.display = 'flex';
+                startTime = Date.now() - (elapsedTime * 1000);
+            } else {
+                // Pause recording
+                mediaRecorder.pause();
+                status.textContent = 'Paused (Inspection time)';
+                pauseText.textContent = 'Resume';
+                recordingIndicator.style.display = 'none';
+                clearInterval(timerInterval);
+            }
+            
+            isPaused = !isPaused;
+        }
+        
+        // Stop recording
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                isPaused = false;
+                
+                // Update UI
+                status.textContent = 'Processing recording...';
+                recordBtn.disabled = false;
+                pauseBtn.disabled = true;
+                stopBtn.disabled = true;
+                recordingIndicator.style.display = 'none';
+                pauseText.textContent = 'Pause';
+                clearInterval(timerInterval);
+            }
+        }
+        
+        // Upload recording to backend
+        async function uploadRecording(audioBlob) {
+            try {
+                // Show upload status
+                uploadStatus.style.display = 'block';
+                uploadMessage.textContent = 'Uploading your recording...';
+                
+                // Simulate upload (replace with actual API call)
+                // For now, we'll simulate a successful upload
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Success
+                uploadStatus.classList.add('success');
+                uploadMessage.innerHTML = '✅ Upload successful!<br><small>Your recording is being analyzed</small>';
+                status.textContent = 'Ready for next recording';
+                timer.textContent = '00:00';
+                elapsedTime = 0;
+                
+                // Auto-hide success message after 5 seconds
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                    uploadStatus.classList.remove('success');
+                }, 5000);
+                
+            } catch (error) {
+                // Error handling
+                uploadStatus.classList.add('error');
+                uploadMessage.textContent = `❌ Upload failed: ${error.message}`;
+                status.textContent = 'Upload failed - recording saved locally';
+                
+                // Save to device storage as fallback
+                saveToDevice(audioBlob);
+            }
+        }
+        
+        // Save recording to device (fallback)
+        function saveToDevice(audioBlob) {
+            const url = URL.createObjectURL(audioBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `talk-track-${Date.now()}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        // Service Worker Registration for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Prevent accidental refresh during recording
+        window.addEventListener('beforeunload', (e) => {
+            if (isRecording) {
+                e.preventDefault();
+                e.returnValue = 'You are currently recording. Are you sure you want to leave?';
+            }
+        });
+        
+        // iOS fullscreen PWA fix
+        if (window.navigator.standalone) {
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
         }
     </script>
 </body>
