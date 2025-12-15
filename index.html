@@ -423,6 +423,10 @@
                     <span class="btn-icon">💾</span>
                     <span class="btn-text">Save Transcript</span>
                 </button>
+                <button class="btn" onclick="saveToLibrary()" style="background:linear-gradient(45deg,#8b5cf6,#7c3aed);flex:1;">
+                    <span class="btn-icon">📁</span>
+                    <span class="btn-text">Save to Library</span>
+                </button>
             </div>
         </div>
         
@@ -457,8 +461,8 @@
     </div>
 
     <script>
-        // Configuration - ADD YOUR API KEY HERE!
-        const ASSEMBLYAI_API_KEY = 'YOUR_ASSEMBLYAI_API_KEY'; // ← REPLACE THIS!
+        // Configuration - YOUR API KEY IS INTEGRATED
+        const ASSEMBLYAI_API_KEY = '12673c2715c646bb95ffcb6fcb030e1f';
         const ASSEMBLYAI_UPLOAD_URL = 'https://api.assemblyai.com/v2/upload';
         const ASSEMBLYAI_TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
         
@@ -642,11 +646,6 @@
                 return;
             }
             
-            if (ASSEMBLYAI_API_KEY === 'YOUR_ASSEMBLYAI_API_KEY') {
-                alert('Please add your AssemblyAI API key in the code!');
-                return;
-            }
-            
             try {
                 // Show processing status
                 showStatus('Uploading to AssemblyAI...', 'processing');
@@ -685,11 +684,13 @@
                 showStatus('Transcription complete!', 'success');
                 setTimeout(() => {
                     uploadStatus.style.display = 'none';
+                    progressBar.style.display = 'none';
                 }, 3000);
                 
             } catch (error) {
                 console.error('Transcription error:', error);
                 showStatus(`Transcription failed: ${error.message}`, 'error');
+                progressBar.style.display = 'none';
                 
                 // Fallback: Try browser's Speech Recognition (less accurate)
                 if (confirm('AI transcription failed. Try browser speech recognition (less accurate)?')) {
@@ -864,29 +865,6 @@
             }, 2000);
         }
         
-        // Copy transcript to clipboard
-        function copyTranscript() {
-            if (!currentTranscript) {
-                alert('No transcript to copy!');
-                return;
-            }
-            
-            navigator.clipboard.writeText(currentTranscript)
-                .then(() => {
-                    const copyBtn = document.querySelector('[onclick="copyTranscript()"]');
-                    const originalText = copyBtn.textContent;
-                    copyBtn.textContent = '✓ Copied!';
-                    
-                    setTimeout(() => {
-                        copyBtn.textContent = originalText;
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Copy failed:', err);
-                    alert('Failed to copy transcript');
-                });
-        }
-        
         // Save audio to device
         function saveToDevice() {
             if (!currentRecording) return;
@@ -1029,6 +1007,29 @@
             }
         }
         
+        // Copy transcript to clipboard
+        function copyTranscript() {
+            if (!currentTranscript) {
+                alert('No transcript to copy!');
+                return;
+            }
+            
+            navigator.clipboard.writeText(currentTranscript)
+                .then(() => {
+                    const copyBtn = document.querySelector('[onclick="copyTranscript()"]');
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = '✓ Copied!';
+                    
+                    setTimeout(() => {
+                        copyBtn.textContent = '📋 Copy';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Copy failed:', err);
+                    alert('Failed to copy transcript');
+                });
+        }
+        
         // Helper: Show status message
         function showStatus(message, type) {
             uploadMessage.innerHTML = message;
@@ -1073,6 +1074,12 @@
         if (recordings.length > 0) {
             historyBtn.style.display = 'block';
         }
+        
+        // Test API key on load
+        window.addEventListener('load', () => {
+            console.log('Talk Track loaded with AssemblyAI API key');
+            console.log('Credits available: $50 (approx 1,000 minutes of transcription)');
+        });
     </script>
 </body>
 </html>
