@@ -2,374 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Talk Track - AI Sales Meeting Recorder</title>
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="manifest.json">
-    
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="https://img.icons8.com/color/192/000000/microphone.png">
-    
-    <!-- CSS Styles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Talk Track - Sales Meeting Recorder</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 25px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            background: linear-gradient(45deg, #fff, #e0e7ff);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .subtitle {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 16px;
-            margin-bottom: 5px;
-        }
-        
-        .status-box {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        #status {
-            font-size: 18px;
-            font-weight: 500;
-            color: #fff;
-        }
-        
-        .timer {
-            font-size: 48px;
-            font-weight: 700;
-            margin: 15px 0;
-            font-variant-numeric: tabular-nums;
-            color: #fff;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin: 25px 0;
-        }
-        
-        .btn {
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: white;
-        }
-        
-        .btn:active {
-            transform: scale(0.95);
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .record-btn {
-            background: linear-gradient(45deg, #ef4444, #dc2626);
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
-        }
-        
-        .pause-btn {
-            background: linear-gradient(45deg, #f59e0b, #d97706);
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-        }
-        
-        .stop-btn {
-            background: linear-gradient(45deg, #10b981, #059669);
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-        }
-        
-        .transcribe-btn {
-            background: linear-gradient(45deg, #3b82f6, #1d4ed8);
-            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-        }
-        
-        .save-btn {
-            background: linear-gradient(45deg, #8b5cf6, #7c3aed);
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-        }
-        
-        .btn-icon {
-            font-size: 24px;
-        }
-        
-        .btn-text {
-            font-size: 14px;
-        }
-        
-        .recording-indicator {
-            display: none;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        
-        .pulse {
-            width: 20px;
-            height: 20px;
-            background: #ef4444;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(0.8); opacity: 0.7; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.8); opacity: 0.7; }
-        }
-        
-        .audio-container {
-            margin-top: 30px;
-            width: 100%;
-            display: none;
-        }
-        
-        .transcript-container {
-            margin-top: 20px;
-            width: 100%;
-            display: none;
-        }
-        
-        .transcript-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .transcript-box {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            max-height: 300px;
-            overflow-y: auto;
-            font-size: 14px;
-            line-height: 1.5;
-            text-align: left;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .transcript-box p {
-            margin-bottom: 10px;
-        }
-        
-        .audio-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .audio-controls .btn {
-            flex: 1;
-            padding: 12px;
-        }
-        
-        audio {
-            width: 100%;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
-        
-        .upload-status {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            text-align: center;
-            display: none;
-        }
-        
-        .upload-status.success {
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid rgba(16, 185, 129, 0.5);
-        }
-        
-        .upload-status.error {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-        }
-        
-        .upload-status.processing {
-            background: rgba(59, 130, 246, 0.2);
-            border: 1px solid rgba(59, 130, 246, 0.5);
-        }
-        
-        .footer {
-            margin-top: 30px;
-            text-align: center;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.6);
-        }
-        
-        @supports (padding: max(0px)) {
-            body {
-                padding-left: max(20px, env(safe-area-inset-left));
-                padding-right: max(20px, env(safe-area-inset-right));
-            }
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: white; }
+        .container { max-width: 500px; margin: 0 auto; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 25px; }
+        h1 { text-align: center; margin-bottom: 20px; }
+        .status-box { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; margin: 20px 0; text-align: center; }
+        #status { font-size: 18px; font-weight: 500; }
+        .timer { font-size: 48px; font-weight: 700; margin: 15px 0; }
+        .controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 25px 0; }
+        .btn { padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; color: white; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .record-btn { background: linear-gradient(45deg, #ef4444, #dc2626); }
+        .pause-btn { background: linear-gradient(45deg, #f59e0b, #d97706); }
+        .stop-btn { background: linear-gradient(45deg, #10b981, #059669); }
+        .transcribe-btn { background: linear-gradient(45deg, #3b82f6, #1d4ed8); }
+        .audio-container { margin-top: 30px; display: none; }
+        audio { width: 100%; border-radius: 10px; margin: 10px 0; }
+        .upload-status { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; margin-top: 20px; text-align: center; display: none; }
+        .transcript-container { margin-top: 20px; display: none; }
+        .transcript-box { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 15px; max-height: 300px; overflow-y: auto; text-align: left; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🎤 Talk Track</h1>
-            <p class="subtitle">AI-Powered Sales Meeting Analysis</p>
-        </div>
+        <h1>🎤 Talk Track</h1>
         
         <div class="status-box">
             <div id="status">Ready to record</div>
             <div class="timer" id="timer">00:00</div>
         </div>
         
-        <div class="recording-indicator" id="recordingIndicator">
-            <div class="pulse"></div>
-            <span>Recording active</span>
-        </div>
-        
         <div class="controls">
-            <button class="btn record-btn" id="recordBtn" onclick="startRecording()">
-                <span class="btn-icon">●</span>
-                <span class="btn-text">Record</span>
-            </button>
-            
-            <button class="btn pause-btn" id="pauseBtn" onclick="togglePause()" disabled>
-                <span class="btn-icon">⏸️</span>
-                <span class="btn-text" id="pauseText">Pause</span>
-            </button>
-            
-            <button class="btn stop-btn" id="stopBtn" onclick="stopRecording()" disabled>
-                <span class="btn-icon">⏹️</span>
-                <span class="btn-text">Stop</span>
-            </button>
+            <button class="btn record-btn" id="recordBtn">● Record</button>
+            <button class="btn pause-btn" id="pauseBtn" disabled>⏸️ Pause</button>
+            <button class="btn stop-btn" id="stopBtn" disabled>⏹️ Stop</button>
         </div>
         
         <div class="audio-container" id="audioContainer">
             <p>Your recording:</p>
             <audio id="audioPlayback" controls></audio>
-            <div class="audio-controls">
-                <button class="btn transcribe-btn" id="transcribeBtn" onclick="transcribeAudio()">
-                    <span class="btn-icon">🤖</span>
-                    <span class="btn-text">AI Transcribe</span>
-                </button>
-                <button class="btn save-btn" onclick="saveToDevice()">
-                    <span class="btn-icon">💾</span>
-                    <span class="btn-text">Save Audio</span>
-                </button>
-            </div>
+            <button class="btn transcribe-btn" id="transcribeBtn" style="width:100%;margin-top:15px;">🤖 Transcribe with AI</button>
         </div>
         
         <div class="transcript-container" id="transcriptContainer">
-            <div class="transcript-header">
-                <h3>📄 AI Transcript</h3>
-                <button class="btn" onclick="copyTranscript()" style="padding:8px 12px;font-size:12px;background:rgba(255,255,255,0.2);">
-                    📋 Copy
-                </button>
-            </div>
-            <div class="transcript-box" id="transcriptBox">
-                <!-- Transcript will appear here -->
-            </div>
-            <div class="audio-controls" style="margin-top:10px;">
-                <button class="btn" onclick="saveTranscript()" style="background:linear-gradient(45deg,#10b981,#059669);">
-                    💾 Save TXT
-                </button>
-            </div>
+            <h3>Transcript</h3>
+            <div class="transcript-box" id="transcriptBox"></div>
+            <button class="btn" id="saveTranscriptBtn" style="background:linear-gradient(45deg,#10b981,#059669);width:100%;margin-top:15px;">
+                💾 Save Transcript
+            </button>
         </div>
         
         <div class="upload-status" id="uploadStatus">
             <div id="uploadMessage">Processing...</div>
-            <div id="progressBar" style="margin-top:10px;display:none;">
-                <div style="background:rgba(255,255,255,0.2);border-radius:10px;height:6px;">
-                    <div id="progressFill" style="background:#3b82f6;height:100%;border-radius:10px;width:0%;transition:width 0.3s;"></div>
-                </div>
-                <div id="progressText" style="font-size:12px;margin-top:5px;"></div>
-            </div>
         </div>
-    </div>
-    
-    <div class="footer">
-        <p>Powered by AssemblyAI • API Key: ✅ Active</p>
     </div>
 
     <script>
         // ========== CONFIGURATION ==========
-        // YOUR NEW API KEY IS INTEGRATED HERE
-        const ASSEMBLYAI_API_KEY = '6fc9030ecb074dc88055f8a257aff0f7';
-        const ASSEMBLYAI_UPLOAD_URL = 'https://api.assemblyai.com/v2/upload';
-        const ASSEMBLYAI_TRANSCRIPT_URL = 'https://api.assemblyai.com/v2/transcript';
+        const API_KEY = '6fc9030ecb074dc88055f8a257aff0f7';
         
-        // Use a CORS proxy to avoid iOS restrictions (free public proxy)
-        const USE_CORS_PROXY = true;
-        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-        
-        // ========== STATE VARIABLES ==========
-        let mediaRecorder;
+        // ========== GLOBAL VARIABLES ==========
+        let mediaRecorder = null;
         let audioChunks = [];
         let isRecording = false;
         let isPaused = false;
-        let startTime;
-        let timerInterval;
+        let startTime = 0;
+        let timerInterval = null;
         let elapsedTime = 0;
         let currentRecording = null;
         let currentTranscript = '';
@@ -378,41 +80,26 @@
         const recordBtn = document.getElementById('recordBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const stopBtn = document.getElementById('stopBtn');
+        const transcribeBtn = document.getElementById('transcribeBtn');
         const status = document.getElementById('status');
         const timer = document.getElementById('timer');
-        const recordingIndicator = document.getElementById('recordingIndicator');
         const audioContainer = document.getElementById('audioContainer');
+        const audioPlayback = document.getElementById('audioPlayback');
         const transcriptContainer = document.getElementById('transcriptContainer');
         const transcriptBox = document.getElementById('transcriptBox');
-        const audioPlayback = document.getElementById('audioPlayback');
         const uploadStatus = document.getElementById('uploadStatus');
         const uploadMessage = document.getElementById('uploadMessage');
-        const progressBar = document.getElementById('progressBar');
-        const progressFill = document.getElementById('progressFill');
-        const progressText = document.getElementById('progressText');
+        const saveTranscriptBtn = document.getElementById('saveTranscriptBtn');
         
-        // ========== UTILITY FUNCTIONS ==========
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
+        // ========== INITIALIZE ==========
+        console.log('Talk Track initialized with API key:', API_KEY);
         
-        function updateTimer() {
-            elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-            timer.textContent = formatTime(elapsedTime);
-        }
-        
-        function showStatus(message, type = 'processing') {
-            uploadMessage.innerHTML = message;
-            uploadStatus.className = 'upload-status ' + type;
-            uploadStatus.style.display = 'block';
-        }
-        
-        function updateProgress(percent, text) {
-            progressFill.style.width = percent + '%';
-            progressText.textContent = text;
-        }
+        // ========== EVENT LISTENERS ==========
+        recordBtn.addEventListener('click', startRecording);
+        pauseBtn.addEventListener('click', togglePause);
+        stopBtn.addEventListener('click', stopRecording);
+        transcribeBtn.addEventListener('click', transcribeAudio);
+        saveTranscriptBtn.addEventListener('click', saveTranscript);
         
         // ========== RECORDING FUNCTIONS ==========
         async function startRecording() {
@@ -430,49 +117,53 @@
                     audioBitsPerSecond: 128000
                 });
                 
-                mediaRecorder.ondataavailable = event => {
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = (event) => {
                     if (event.data.size > 0) {
                         audioChunks.push(event.data);
                     }
                 };
                 
-                mediaRecorder.onstop = async () => {
+                mediaRecorder.onstop = () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                     
                     currentRecording = {
-                        id: Date.now().toString(),
                         blob: audioBlob,
                         duration: elapsedTime,
-                        timestamp: new Date().toISOString(),
-                        name: `Sales Meeting ${new Date().toLocaleDateString()}`,
-                        transcript: ''
+                        timestamp: new Date().toISOString()
                     };
                     
                     const audioUrl = URL.createObjectURL(audioBlob);
                     audioPlayback.src = audioUrl;
                     audioContainer.style.display = 'block';
-                    transcriptContainer.style.display = 'none';
                     
-                    audioChunks = [];
                     stream.getTracks().forEach(track => track.stop());
                     
-                    showStatus('✅ Recording saved! Tap "AI Transcribe"', 'success');
+                    status.textContent = 'Recording saved!';
+                    showStatus('✅ Recording saved! Ready for transcription.', 'success');
                 };
                 
                 mediaRecorder.start(1000);
                 isRecording = true;
                 startTime = Date.now();
-                timerInterval = setInterval(updateTimer, 1000);
+                
+                timerInterval = setInterval(() => {
+                    elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+                    const mins = Math.floor(elapsedTime / 60);
+                    const secs = elapsedTime % 60;
+                    timer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }, 1000);
                 
                 status.textContent = 'Recording...';
                 recordBtn.disabled = true;
                 pauseBtn.disabled = false;
                 stopBtn.disabled = false;
-                recordingIndicator.style.display = 'flex';
                 
             } catch (error) {
-                status.textContent = `Error: ${error.message}`;
-                alert('Please allow microphone access in Settings → Safari → Microphone');
+                console.error('Recording error:', error);
+                status.textContent = 'Error: ' + error.message;
+                alert('Please allow microphone access to use this app.');
             }
         }
         
@@ -482,14 +173,12 @@
             if (isPaused) {
                 mediaRecorder.resume();
                 status.textContent = 'Recording...';
-                pauseBtn.innerHTML = '<span class="btn-icon">⏸️</span><span class="btn-text">Pause</span>';
-                recordingIndicator.style.display = 'flex';
+                pauseBtn.textContent = '⏸️ Pause';
                 startTime = Date.now() - (elapsedTime * 1000);
             } else {
                 mediaRecorder.pause();
                 status.textContent = 'Paused (Inspection)';
-                pauseBtn.innerHTML = '<span class="btn-icon">▶️</span><span class="btn-text">Resume</span>';
-                recordingIndicator.style.display = 'none';
+                pauseBtn.textContent = '▶️ Resume';
                 clearInterval(timerInterval);
             }
             
@@ -506,8 +195,7 @@
                 recordBtn.disabled = false;
                 pauseBtn.disabled = true;
                 stopBtn.disabled = true;
-                recordingIndicator.style.display = 'none';
-                pauseBtn.innerHTML = '<span class="btn-icon">⏸️</span><span class="btn-text">Pause</span>';
+                pauseBtn.textContent = '⏸️ Pause';
                 clearInterval(timerInterval);
             }
         }
@@ -519,120 +207,69 @@
                 return;
             }
             
+            showStatus('Starting transcription...', 'processing');
+            
             try {
-                showStatus('Starting AI transcription...', 'processing');
-                progressBar.style.display = 'block';
-                updateProgress(10, 'Preparing audio...');
+                // Step 1: Upload audio
+                showStatus('Uploading audio to AssemblyAI...', 'processing');
+                const uploadResult = await uploadAudio(currentRecording.blob);
                 
-                // First test if API key works
-                const keyTest = await testAPIKey();
-                if (!keyTest.valid) {
-                    throw new Error(`API Key Error: ${keyTest.message}`);
+                if (!uploadResult.upload_url) {
+                    throw new Error('Failed to get upload URL');
                 }
                 
-                // Upload audio
-                updateProgress(30, 'Uploading to AssemblyAI...');
-                const audioUrl = await uploadAudio(currentRecording.blob);
+                // Step 2: Start transcription
+                showStatus('Starting transcription job...', 'processing');
+                const transcriptId = await startTranscription(uploadResult.upload_url);
                 
-                // Start transcription
-                updateProgress(50, 'Starting transcription job...');
-                const transcriptId = await startTranscriptionJob(audioUrl);
-                
-                // Poll for results
-                updateProgress(70, 'AI is transcribing your meeting...');
+                // Step 3: Poll for results
+                showStatus('AI is transcribing your meeting...', 'processing');
                 const transcript = await pollTranscription(transcriptId);
                 
-                // Complete
-                updateProgress(100, 'Transcription complete!');
+                // Step 4: Display transcript
                 currentTranscript = transcript;
                 displayTranscript(transcript);
-                currentRecording.transcript = transcript;
                 
-                showStatus('✅ AI Transcription Complete!', 'success');
-                
-                setTimeout(() => {
-                    uploadStatus.style.display = 'none';
-                    progressBar.style.display = 'none';
-                }, 3000);
+                showStatus('✅ Transcription complete!', 'success');
                 
             } catch (error) {
                 console.error('Transcription error:', error);
-                showStatus(`❌ ${error.message}`, 'error');
-                progressBar.style.display = 'none';
+                showStatus(`❌ Error: ${error.message}`, 'error');
                 
-                // Offer mock transcription as fallback
-                if (confirm('AI service issue. Use demo transcription instead?')) {
+                // Fallback to mock transcription
+                if (confirm('AI service issue. Use demo transcription?')) {
                     useMockTranscription();
                 }
             }
         }
         
-        async function testAPIKey() {
-            try {
-                let testUrl = ASSEMBLYAI_TRANSCRIPT_URL;
-                if (USE_CORS_PROXY) {
-                    testUrl = CORS_PROXY + testUrl;
-                }
-                
-                const response = await fetch(testUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': ASSEMBLYAI_API_KEY,
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ audio_url: 'test' })
-                });
-                
-                // Even if we get an error, if it's not 401, the key is valid
-                if (response.status === 401) {
-                    return { valid: false, message: 'Invalid API Key (401 Unauthorized)' };
-                }
-                
-                return { valid: true, message: 'API Key is valid' };
-            } catch (error) {
-                return { valid: false, message: `Network error: ${error.message}` };
-            }
-        }
-        
         async function uploadAudio(audioBlob) {
+            console.log('Uploading audio blob:', audioBlob.size, 'bytes');
+            
             const formData = new FormData();
             formData.append('file', audioBlob, 'recording.webm');
             
-            let uploadUrl = ASSEMBLYAI_UPLOAD_URL;
-            if (USE_CORS_PROXY) {
-                uploadUrl = CORS_PROXY + uploadUrl;
-            }
-            
-            const response = await fetch(uploadUrl, {
+            const response = await fetch('https://api.assemblyai.com/v2/upload', {
                 method: 'POST',
                 headers: {
-                    'Authorization': ASSEMBLYAI_API_KEY,
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'Authorization': API_KEY
                 },
                 body: formData
             });
             
             if (!response.ok) {
-                throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+                throw new Error(`Upload failed: ${response.status}`);
             }
             
-            const data = await response.json();
-            return data.upload_url;
+            return await response.json();
         }
         
-        async function startTranscriptionJob(audioUrl) {
-            let transcriptUrl = ASSEMBLYAI_TRANSCRIPT_URL;
-            if (USE_CORS_PROXY) {
-                transcriptUrl = CORS_PROXY + transcriptUrl;
-            }
-            
-            const response = await fetch(transcriptUrl, {
+        async function startTranscription(audioUrl) {
+            const response = await fetch('https://api.assemblyai.com/v2/transcript', {
                 method: 'POST',
                 headers: {
-                    'Authorization': ASSEMBLYAI_API_KEY,
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'Authorization': API_KEY,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     audio_url: audioUrl,
@@ -644,7 +281,7 @@
             });
             
             if (!response.ok) {
-                throw new Error(`Transcription job failed: ${response.status}`);
+                throw new Error(`Transcription start failed: ${response.status}`);
             }
             
             const data = await response.json();
@@ -653,24 +290,14 @@
         
         async function pollTranscription(transcriptId) {
             let attempts = 0;
-            const maxAttempts = 40; // 40 * 3s = 2 minutes max
+            const maxAttempts = 40; // 2 minutes max
             
             while (attempts < maxAttempts) {
-                let pollUrl = `${ASSEMBLYAI_TRANSCRIPT_URL}/${transcriptId}`;
-                if (USE_CORS_PROXY) {
-                    pollUrl = CORS_PROXY + pollUrl;
-                }
-                
-                const response = await fetch(pollUrl, {
+                const response = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
                     headers: {
-                        'Authorization': ASSEMBLYAI_API_KEY,
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'Authorization': API_KEY
                     }
                 });
-                
-                if (!response.ok) {
-                    throw new Error(`Polling failed: ${response.status}`);
-                }
                 
                 const data = await response.json();
                 
@@ -680,64 +307,51 @@
                     throw new Error(data.error);
                 }
                 
-                // Update progress
-                const progress = 70 + Math.floor((attempts / maxAttempts) * 25);
-                updateProgress(progress, `Transcribing... (${data.status})`);
+                // Update status every 5 attempts
+                if (attempts % 5 === 0) {
+                    showStatus(`Transcribing... (${data.status})`, 'processing');
+                }
                 
                 // Wait 3 seconds before next poll
                 await new Promise(resolve => setTimeout(resolve, 3000));
                 attempts++;
             }
             
-            throw new Error('Transcription timeout after 2 minutes');
+            throw new Error('Transcription timeout');
         }
         
         function useMockTranscription() {
-            showStatus('Generating demo transcript...', 'processing');
-            
             setTimeout(() => {
-                const mockTranscript = `SALES REP: Good morning, I'm Alex from TalkTrack. Thanks for taking the meeting today.
+                const mockTranscript = `SALES REP: Good morning, I'm Alex from TalkTrack. Thanks for the meeting today.
                 
-PROSPECT: No problem, I'm interested in what you have to offer.
+CLIENT: No problem. I'm interested in what you have to offer.
 
-SALES REP: Great. I understand you're looking to improve your sales team's performance. Is that correct?
+SALES REP: Great. Our platform records sales meetings, transcribes them with AI, and analyzes against your sales framework. It identifies exactly where reps can improve.
 
-PROSPECT: Yes, we're struggling with consistency in our sales conversations.
-
-SALES REP: Perfect. Our platform records sales meetings, transcribes them with AI, and analyzes against your sales framework. It identifies exactly where reps can improve.
-
-PROSPECT: How accurate is the transcription?
+CLIENT: How accurate is the transcription?
 
 SALES REP: We use AssemblyAI which has 95%+ accuracy. It even identifies different speakers automatically.
 
-PROSPECT: What about pricing?
+CLIENT: What's the pricing?
 
-SALES REP: We have three tiers starting at $997/month for up to 10 reps. Most clients see ROI within 30 days from increased close rates.
+SALES REP: We start at $997/month for up to 10 reps. Most clients see ROI within 30 days from increased close rates.
 
-PROSPECT: Can we try it first?
-
-SALES REP: Absolutely. I'll set up a 14-day trial for your team. When would you like to start?`;
+CLIENT: Let me discuss with my team and get back to you.`;
 
                 currentTranscript = mockTranscript;
                 displayTranscript(mockTranscript);
-                currentRecording.transcript = mockTranscript;
                 
-                showStatus('✅ Demo Transcription Complete!', 'success');
+                showStatus('✅ Demo transcription complete!', 'success');
             }, 1500);
         }
         
         function displayTranscript(text) {
-            if (!text) return;
-            
-            // Format with paragraphs
             const paragraphs = text.split('\n\n').filter(p => p.trim());
             const formatted = paragraphs.map(p => `<p>${p.trim()}</p>`).join('');
             
             transcriptBox.innerHTML = formatted;
             transcriptContainer.style.display = 'block';
-            
-            // Scroll into view
-            transcriptContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            transcriptContainer.scrollIntoView({ behavior: 'smooth' });
         }
         
         function saveTranscript() {
@@ -757,66 +371,34 @@ SALES REP: Absolutely. I'll set up a 14-day trial for your team. When would you 
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
             
             showStatus('✅ Transcript saved!', 'success');
         }
         
-        function saveToDevice() {
-            if (!currentRecording) return;
+        function showStatus(message, type) {
+            uploadMessage.textContent = message;
+            uploadStatus.className = 'upload-status';
             
-            try {
-                const url = URL.createObjectURL(currentRecording.blob);
-                const a = document.createElement('a');
-                
-                const date = new Date().toISOString().split('T')[0];
-                const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
-                a.href = url;
-                a.download = `talk-track-${date}-${time}.webm`;
-                
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                showStatus('✅ Audio saved to Downloads!', 'success');
-                
-            } catch (error) {
-                alert('Failed to save: ' + error.message);
-            }
-        }
-        
-        function copyTranscript() {
-            if (!currentTranscript) {
-                alert('No transcript to copy!');
-                return;
+            if (type === 'success') {
+                uploadStatus.style.background = 'rgba(16, 185, 129, 0.2)';
+                uploadStatus.style.border = '1px solid rgba(16, 185, 129, 0.5)';
+            } else if (type === 'error') {
+                uploadStatus.style.background = 'rgba(239, 68, 68, 0.2)';
+                uploadStatus.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+            } else {
+                uploadStatus.style.background = 'rgba(59, 130, 246, 0.2)';
+                uploadStatus.style.border = '1px solid rgba(59, 130, 246, 0.5)';
             }
             
-            navigator.clipboard.writeText(currentTranscript)
-                .then(() => {
-                    const btn = document.querySelector('[onclick="copyTranscript()"]');
-                    const original = btn.textContent;
-                    btn.textContent = '✅ Copied!';
-                    
-                    setTimeout(() => {
-                        btn.textContent = original;
-                    }, 2000);
-                })
-                .catch(err => {
-                    alert('Failed to copy: ' + err.message);
-                });
-        }
-        
-        // ========== INITIALIZATION ==========
-        window.addEventListener('load', () => {
-            console.log('Talk Track loaded with API Key: 6fc9030ecb074dc88055f8a257aff0f7');
-            console.log('Credits available: $50 (approx 1,000 minutes)');
+            uploadStatus.style.display = 'block';
             
-            // Test API key on load
-            testAPIKey().then(result => {
-                console.log('API Key test:', result);
-            });
-        });
+            // Auto-hide success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    uploadStatus.style.display = 'none';
+                }, 3000);
+            }
+        }
         
         // Prevent accidental refresh during recording
         window.addEventListener('beforeunload', (e) => {
@@ -825,12 +407,6 @@ SALES REP: Absolutely. I'll set up a 14-day trial for your team. When would you 
                 e.returnValue = 'You are currently recording. Leave anyway?';
             }
         });
-        
-        // iOS PWA fix
-        if (window.navigator.standalone) {
-            document.documentElement.style.height = '100%';
-            document.body.style.height = '100%';
-        }
     </script>
 </body>
 </html>
